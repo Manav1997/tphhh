@@ -591,7 +591,7 @@ export default function TPHCalculatorClient() {
         height: shareableCardRef.current.offsetHeight,
         onclone: (clonedDoc) => {
           // Fix text alignment in cloned document
-          const clonedElement = clonedDoc.querySelector("[data-screenshot-card]")
+          const clonedElement = clonedDoc.querySelector("[data-screenshot-card]") as HTMLElement
           if (clonedElement) {
             // Ensure proper font rendering
             clonedElement.style.fontFamily = "system-ui, -apple-system, sans-serif"
@@ -599,19 +599,21 @@ export default function TPHCalculatorClient() {
 
             // Fix gradient text for screenshot
             const gradientTexts = clonedElement.querySelectorAll("[data-gradient-text]")
-            gradientTexts.forEach((el: any) => {
-              el.style.background = "linear-gradient(to right, #4f46e5, #7c3aed)"
-              el.style.webkitBackgroundClip = "text"
-              el.style.backgroundClip = "text"
-              el.style.webkitTextFillColor = "transparent"
-              el.style.color = "transparent"
+            gradientTexts.forEach((el) => {
+              const htmlEl = el as HTMLElement
+              htmlEl.style.background = "linear-gradient(to right, #4f46e5, #7c3aed)"
+              htmlEl.style.webkitBackgroundClip = "text"
+              htmlEl.style.backgroundClip = "text"
+              htmlEl.style.webkitTextFillColor = "transparent"
+              htmlEl.style.color = "transparent"
             })
 
             // Ensure score text is visible
             const scoreTexts = clonedElement.querySelectorAll("[data-score-text]")
-            scoreTexts.forEach((el: any) => {
-              el.style.color = "#1e293b"
-              el.style.fontWeight = "900"
+            scoreTexts.forEach((el) => {
+              const htmlEl = el as HTMLElement
+              htmlEl.style.color = "#1e293b"
+              htmlEl.style.fontWeight = "900"
             })
           }
         },
@@ -653,6 +655,23 @@ export default function TPHCalculatorClient() {
         "_blank",
       )
     }
+  }
+
+  const handleTelegramShare = () => {
+    const persona = getTPHPersona(score)
+    let text = `🎯 I just took the TPH Calculator and scored ${score}/100 as "${persona.title}"! 
+
+Find out your Trust Per Human score: ${window.location.origin}`
+
+    // Add referral code if user has one
+    if (myReferralCode) {
+      text += `
+
+🔑 Use my referral code: ${myReferralCode} to join our exclusive community!`
+    }
+
+    const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(text)}`
+    window.open(telegramUrl, "_blank")
   }
 
   const handleWhatsAppShare = () => {
@@ -802,8 +821,9 @@ Find out your Trust Per Human score: ${window.location.origin}`
 
                       <div>
                         <p className="text-sm text-slate-700 leading-relaxed">
-                          <strong>Trust Per Human</strong> is a framework by Kapil Dhiman to measure this foundational
-                          currency through your actions, communication, and consistency, one person at a time.
+                          <strong>Trust Per Human</strong> is a framework created by Kapil Dhiman to measure this
+                          foundational currency through your actions, communication, and consistency, one person at a
+                          time.
                         </p>
                       </div>
 
@@ -1083,47 +1103,58 @@ Find out your Trust Per Human score: ${window.location.origin}`
                     <CardContent className="p-5 text-center space-y-4">
                       <p className="font-medium text-slate-700 text-sm md:text-base">Share your TPH badge! 🚀</p>
 
-                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <div className="flex flex-col gap-3">
                         <Button
                           onClick={captureAndDownloadImage}
                           disabled={isCapturing}
-                          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold px-4 py-2.5 rounded-lg transition-all duration-300 hover:scale-105 text-sm md:text-base"
+                          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold px-4 py-3 rounded-lg transition-all duration-300 hover:scale-105 text-sm w-full"
                         >
                           {isCapturing ? (
                             <>
-                              <Camera className="w-4 h-4 mr-2 animate-pulse" />
-                              Capturing...
+                              <Camera className="w-4 h-4 mr-2" />
+                              Capturing Badge...
                             </>
                           ) : (
                             <>
                               <Download className="w-4 h-4 mr-2" />
-                              Download
+                              Download the Badge
                             </>
                           )}
                         </Button>
 
-                        <Button
-                          onClick={() => handleShare("twitter")}
-                          className="bg-black hover:bg-gray-800 text-white font-semibold px-4 py-2.5 rounded-lg transition-all duration-300 hover:scale-105 text-sm md:text-base"
-                        >
-                          <XIcon className="w-4 h-4 mr-2" />
-                          Share on X
-                        </Button>
+                        <div className="flex justify-center gap-3">
+                          <Button
+                            onClick={() => handleShare("twitter")}
+                            className="bg-black hover:bg-gray-800 text-white font-semibold w-12 h-12 p-0 rounded-lg transition-all duration-300 hover:scale-105 flex items-center justify-center"
+                            title="Share on X"
+                          >
+                            <XIcon className="w-5 h-5" />
+                          </Button>
 
-                        <Button
-                          onClick={() => handleShare("linkedin")}
-                          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded-lg transition-all duration-300 hover:scale-105 text-sm md:text-base"
-                        >
-                          <Linkedin className="w-4 h-4 mr-2" />
-                          LinkedIn
-                        </Button>
-                        <Button
-                          onClick={handleWhatsAppShare}
-                          className="bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2.5 rounded-lg transition-all duration-300 hover:scale-105 text-sm md:text-base"
-                        >
-                          <WhatsAppIcon className="w-4 h-4 mr-2" />
-                          WhatsApp
-                        </Button>
+                          <Button
+                            onClick={() => handleShare("linkedin")}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold w-12 h-12 p-0 rounded-lg transition-all duration-300 hover:scale-105 flex items-center justify-center"
+                            title="Share on LinkedIn"
+                          >
+                            <Linkedin className="w-5 h-5" />
+                          </Button>
+
+                          <Button
+                            onClick={handleTelegramShare}
+                            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold w-12 h-12 p-0 rounded-lg transition-all duration-300 hover:scale-105 flex items-center justify-center"
+                            title="Share on Telegram"
+                          >
+                            <TelegramIcon className="w-5 h-5" />
+                          </Button>
+
+                          <Button
+                            onClick={handleWhatsAppShare}
+                            className="bg-green-500 hover:bg-green-600 text-white font-semibold w-12 h-12 p-0 rounded-lg transition-all duration-300 hover:scale-105 flex items-center justify-center"
+                            title="Share on WhatsApp"
+                          >
+                            <WhatsAppIcon className="w-5 h-5" />
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
