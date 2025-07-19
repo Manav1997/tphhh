@@ -22,10 +22,9 @@ import {
   Shield,
   CheckCircle,
   AlertCircle,
-  Loader2,
 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { storeTPHResult, verifyReferralCode } from "@/lib/supabase"
+import { storeTPHResult } from "@/lib/supabase"
 
 type AppState = "landing" | "userInfo" | "quiz" | "results" | "about"
 
@@ -380,8 +379,6 @@ export default function TPHCalculatorClient() {
   const [showConfetti, setShowConfetti] = useState(false)
   const [scoreAnimationComplete, setScoreAnimationComplete] = useState(false)
   const [myReferralCode, setMyReferralCode] = useState<string>("")
-  const [enteredReferralCode, setEnteredReferralCode] = useState<string>("")
-  const [referralCodeStatus, setReferralCodeStatus] = useState<"idle" | "loading" | "valid" | "invalid">("idle")
   const [canJoinCommunity, setCanJoinCommunity] = useState(false)
   const shareableCardRef = useRef<HTMLDivElement>(null)
 
@@ -409,31 +406,10 @@ export default function TPHCalculatorClient() {
     localStorage.setItem("tph-referral-codes", JSON.stringify(existingCodes))
   }
 
-  // Handle referral code verification
-  const handleReferralCodeVerification = async () => {
-    if (!enteredReferralCode.trim()) {
-      setReferralCodeStatus("invalid")
-      return
-    }
-
-    setReferralCodeStatus("loading")
-
-    try {
-      const result = await verifyReferralCode(enteredReferralCode.trim().toUpperCase())
-
-      if (result.success) {
-        setReferralCodeStatus("valid")
-        setCanJoinCommunity(true)
-      } else {
-        setReferralCodeStatus("invalid")
-        setCanJoinCommunity(false)
-      }
-    } catch (error) {
-      console.error("Error verifying referral code:", error)
-      setReferralCodeStatus("invalid")
-      setCanJoinCommunity(false)
-    }
-  }
+  // Set community access based on score
+  useEffect(() => {
+    setCanJoinCommunity(score >= 80)
+  }, [score])
 
   // Load saved progress on component mount
   useEffect(() => {
@@ -700,8 +676,6 @@ Find out your Trust Per Human score: ${window.location.origin}`
     setUserInfo({ name: "", age: "" })
     setScoreAnimationComplete(false)
     setMyReferralCode("")
-    setEnteredReferralCode("")
-    setReferralCodeStatus("idle")
     setCanJoinCommunity(false)
     localStorage.removeItem("tph-quiz-progress")
   }
@@ -1203,65 +1177,7 @@ Find out your Trust Per Human score: ${window.location.origin}`
                             Score 80+ (Your score: {score})
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          {referralCodeStatus === "valid" ? (
-                            <CheckCircle className="w-4 h-4 text-green-600" />
-                          ) : (
-                            <AlertCircle className="w-4 h-4 text-red-500" />
-                          )}
-                          <span className={referralCodeStatus === "valid" ? "text-green-700" : "text-red-600"}>
-                            Valid referral code from 80+ scorer
-                          </span>
-                        </div>
                       </div>
-
-                      {/* Referral Code Input */}
-                      {score >= 80 && !canJoinCommunity && (
-                        <div className="space-y-3">
-                          <Label htmlFor="referralCode" className="text-sm font-medium text-blue-700">
-                            Enter Referral Code
-                          </Label>
-                          <div className="flex gap-2">
-                            <Input
-                              id="referralCode"
-                              type="text"
-                              placeholder="TPH****"
-                              value={enteredReferralCode}
-                              onChange={(e) => setEnteredReferralCode(e.target.value.toUpperCase())}
-                              className={`flex-1 px-3 py-2 rounded-lg border-2 focus:ring-0 transition-colors text-sm ${
-                                referralCodeStatus === "invalid"
-                                  ? "border-red-300 focus:border-red-500"
-                                  : referralCodeStatus === "valid"
-                                    ? "border-green-300 focus:border-green-500"
-                                    : "border-blue-200 focus:border-blue-500"
-                              }`}
-                              disabled={referralCodeStatus === "loading"}
-                            />
-                            <Button
-                              onClick={handleReferralCodeVerification}
-                              size="sm"
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2"
-                              disabled={referralCodeStatus === "loading" || !enteredReferralCode.trim()}
-                            >
-                              {referralCodeStatus === "loading" ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                "Verify"
-                              )}
-                            </Button>
-                          </div>
-                          {referralCodeStatus === "invalid" && (
-                            <p className="text-xs text-red-600">
-                              Invalid referral code. Make sure it's from someone who scored 80+.
-                            </p>
-                          )}
-                          {referralCodeStatus === "valid" && (
-                            <p className="text-xs text-green-600">
-                              ✅ Valid referral code! You can now join the community.
-                            </p>
-                          )}
-                        </div>
-                      )}
 
                       {/* Telegram Button with Tooltip */}
                       <TooltipProvider>
@@ -1289,7 +1205,7 @@ Find out your Trust Per Human score: ${window.location.origin}`
                           {!canJoinCommunity && (
                             <TooltipContent side="top" className="max-w-xs">
                               <div className="space-y-2">
-                                <p className="font-semibold text-sm">Requirements to join:</p>
+                                <p className="font-semibold text-sm">Requirement to join:</p>
                                 <ul className="text-xs space-y-1">
                                   <li className="flex items-center gap-2">
                                     {score >= 80 ? (
@@ -1298,14 +1214,6 @@ Find out your Trust Per Human score: ${window.location.origin}`
                                       <AlertCircle className="w-3 h-3 text-red-500" />
                                     )}
                                     Score 80+ (You: {score}/100)
-                                  </li>
-                                  <li className="flex items-center gap-2">
-                                    {referralCodeStatus === "valid" ? (
-                                      <CheckCircle className="w-3 h-3 text-green-500" />
-                                    ) : (
-                                      <AlertCircle className="w-3 h-3 text-red-500" />
-                                    )}
-                                    Valid referral code from 80+ scorer
                                   </li>
                                 </ul>
                               </div>
