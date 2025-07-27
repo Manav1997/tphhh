@@ -1,6 +1,7 @@
 import type React from "react"
 import { Analytics } from "@vercel/analytics/react"
 import { Suspense } from "react"
+import "./globals.css"
 
 export const metadata = {
   title: "TPH Calculator - Trust Per Human Score Assessment",
@@ -27,10 +28,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
-        <Analytics />
+        <Suspense fallback={<div>Loading...</div>}>
+          {children}
+          <Analytics />
+        </Suspense>
       </body>
     </html>
   )
 }
+
 
